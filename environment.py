@@ -1,8 +1,8 @@
 import gymnasium as gym
 import time
 
-# Create the enviroment
-env =gym.make('Blackjack-v1',render_mode="human")
+# Create the environment
+env = gym.make('Blackjack-v1', render_mode="human")
 
 # Restart the game to get new inputs(player's total, dealer's total, dealer's ace)
 # Observation will return something like (14, 10, FALSE)
@@ -11,8 +11,7 @@ finished = False
 
 while not finished:
     # Where GA would consult the individual's DNA to choose a decision
-
-    action = 1 # HIT just to test   
+    action = 1  # HIT just to test   
      
     # Step the enviroment forward
     observation,reward,finished,truncated,info=env.step(action)
