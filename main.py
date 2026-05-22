@@ -15,10 +15,14 @@ def create_population(size, dna_size):
     """Creates the initial population with random weights between -1 and 1."""
     return [np.random.uniform(-1, 1, dna_size) for _ in range(size)]
 
-def evaluate_fitness(individual, env, n_games=N_GAMES):
+def evaluate_fitness(individual, env, n_games=N_GAMES, verbose=False, agent_type="thinking"):
     """Evaluates an individual by playing N_GAMES and returning the average reward."""
     nn = NeuralNetwork(weights=individual)
     total_reward = 0.0
+    
+    wins = 0
+    losses = 0
+    draws = 0
 
     for _ in range(n_games):
         observation, info = env.reset()
@@ -27,15 +31,41 @@ def evaluate_fitness(individual, env, n_games=N_GAMES):
         
         while not (finished or truncated):
             # The observation in blackjack is (player_sum, dealer_card, usable_ace)
-            # The predict output should return 0 (Stand) or 1 (Hit)
-            action = nn.predict(observation)
+            if agent_type == "random":
+                # Chooses 0 or 1 completely randomly
+                action = env.action_space.sample()
+            else:
+                # Uses the neural network to decide (thinking)
+                action = nn.predict(observation)
             
             # Ensure the action is a valid int (in case a float is returned)
             if action not in [0, 1]:
                 action = 1 if action > 0.5 else 0
                 
             observation, reward, finished, truncated, info = env.step(action)
-            total_reward += reward
+            
+            # Accumulate reward and stats only when the game ends
+            if finished or truncated:
+                total_reward += reward
+                if reward > 0:
+                    wins += 1
+                elif reward < 0:
+                    losses += 1
+                else:
+                    draws += 1
+                total_points = (wins + losses + draws) / 100;
+            
+            # Add a small delay if we are watching the game visually
+            if getattr(env, "render_mode", None) == "human":
+                import time
+                time.sleep(1.5)
+
+    if verbose:
+        print(f"\n--- Final Performance ({n_games} Games) ---")
+        print(f"Wins:   {wins} -> {wins/(total_points)}%")
+        print(f"Losses: {losses} -> {losses/(total_points)}%")
+        print(f"Draws:  {draws} -> {draws/(total_points)}%")
+        print("-----------------------------------")
 
     return total_reward / n_games
 
@@ -124,12 +154,24 @@ def main():
     print("\nEvolution Completed!")
     print(f"Best Overall Fitness: {best_fitness_overall:.3f}")
     
-    # Show the best individual playing
-    print("\nTesting the best individual visually...")
-    env_visual = gym.make('Blackjack-v1', render_mode="human")
-    # Test for 15 games so we can observe
-    evaluate_fitness(best_individual_overall, env_visual, n_games=15)
-    env_visual.close()
+    # 1. Show a Random Agent playing
+    print("\n--- Testing a RANDOM agent ---")
+    try:
+        env_visual = gym.make('Blackjack-v1', render_mode="human")
+        evaluate_fitness(best_individual_overall, env_visual, n_games=5, verbose=True, agent_type="random")
+        env_visual.close()
+    except Exception as e:
+        print(f"\n[Warning] An error occurred while trying to open the visual Pygame window: {e}")
+
+    # 2. Show the Best Trained Agent playing
+    print("\n--- Testing the BEST TRAINED individual ---")
+    try:
+        env_visual = gym.make('Blackjack-v1', render_mode="human")
+        evaluate_fitness(best_individual_overall, env_visual, n_games=5, verbose=True, agent_type="thinking")
+        env_visual.close()
+    except Exception as e:
+        print(f"\n[Warning] An error occurred while trying to open the visual Pygame window: {e}")
+        print("This does not affect the neural network training, only the final visualization.")
 
 if __name__ == "__main__":
     main()

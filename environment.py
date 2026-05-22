@@ -11,6 +11,7 @@ finished = False
 
 while not finished:
     # Where GA would consult the individual's DNA to choose a decision
+
     action = 1  # HIT just to test   
      
     # Step the enviroment forward
@@ -19,11 +20,8 @@ while not finished:
     print("Reward:",reward,"Finished:",finished,"Truncated:",truncated)    
 
 
-
-
-
-# Esperar 3 segundos para conseguires ver o resultado final
+# 3 sec to see final result
 time.sleep(3)
-env.close() # Fechar a janela do jogo de forma limpa
+env.close() # Close window
 
 print(env.observation_space)
