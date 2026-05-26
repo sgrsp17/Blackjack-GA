@@ -4,24 +4,53 @@
 This project implements an Artificial Intelligence agent designed to play the Blackjack environment provided by Gymnasium (`Blackjack-v1`). The core objective is to develop a robust neural network controller trained via neuroevolution, specifically utilizing a Genetic Algorithm for global optimization.
 
 ## Project Structure
-- `environment.py`: Manages the integration with the Gymnasium `Blackjack-v1` environment. It handles state observation retrieval, action execution, and the rendering lifecycle.
-- `main.py`: The designated entry point for orchestrating the neuroevolution training process and agent evaluation.
-- `neural_network.py`: Contains the architecture and forward-pass logic for the neural network controller that determines the agent's actions based on environmental states.
+- `main.py`: Entry point that orchestrates the training pipeline.
+- `genetic_algorithm.py`: Implements the GA logic — population creation, fitness evaluation, selection, crossover, mutation, and the training loop.
+- `neural_network.py`: Simple feedforward neural network that serves as the agent's decision-making controller.
+- `visualization.py`: Handles visualization during best-agent playback — draws game results sidebar and fitness evolution graph.
 
-## Setup and Dependencies
-Ensure a compatible Python version (3.13 is recommended) is installed. The environment requires the following core dependencies:
+## Setup and Installation
 
+### 1. Clone the repository
 ```bash
-pip install gymnasium numpy
+git clone <repository-url>
+cd Blackjack-GA
 ```
 
-*Note: For graphical rendering using `render_mode="human"`, the `pygame` package is additionally required.*
+### 2. Create a virtual environment (recommended)
+```bash
+python -3.11 -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
-To test the core environment functionality and the action loop, execute:
 
+### Train a new agent
 ```bash
-python environment.py
+python main.py
 ```
 
-This will initialize the Blackjack environment, execute a sample action loop, and display the resulting observation states (Player's sum, Dealer's showing card, Usable Ace indicator) and step rewards in the console. The environment window will cleanly exit after a 3-second delay upon game completion.
+This will:
+1. Train the GA for 100 generations (configurable in `genetic_algorithm.py`)
+2. Save the best agent weights to `best_agent.npy`
+3. Display a fitness evolution graph and save it as `fitness_evolution.png`
+4. Play 5 games with the best trained agent with visual rendering
+
+### Use a pre-trained agent
+Modify the code to load `best_agent.npy` and call `evaluate_fitness()` with the loaded weights.
+
+## Configuration
+Key hyperparameters are defined at the top of `genetic_algorithm.py`:
+- `POPULATION_SIZE`: Number of individuals per generation (default: 50)
+- `GENERATIONS`: Number of training generations (default: 100)
+- `MUTATION_RATE`: Probability of gene mutation (default: 0.1)
+- `N_GAMES`: Games per fitness evaluation (default: 100)
+- `TOURNAMENT_SIZE`: Individuals in tournament selection (default: 3)
