@@ -1,6 +1,6 @@
 import numpy as np
 import gymnasium as gym
-from main import evaluate_fitness
+from genetic_algorithm import evaluate_fitness
 
 def test_saved_agent():
     print("Loading the best agent from 'best_agent.npy'...")
