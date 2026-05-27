@@ -8,11 +8,12 @@ def main():
     """Orchestrates the neuroevolution training and best-agent playback."""
     # Train the population
     env = gym.make('Blackjack-v1', render_mode=None)
-    best_individual, best_fitness, max_fitness_history, avg_fitness_history = run_evolution(env)
+    best_individual, best_fitness, max_fitness_history, avg_fitness_history, total_time = run_evolution(env)
     env.close()
-    
+
     print("\nEvolution Completed!")
     print(f"Best Overall Fitness: {best_fitness:.3f}")
+    print(f"Total Training Time:  {total_time:.1f}s")
     
     # Save the best agent
     np.save('best_agent.npy', best_individual)

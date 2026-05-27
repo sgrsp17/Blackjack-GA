@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import random
 from neural_network import NeuralNetwork
@@ -165,8 +166,13 @@ def run_evolution(env, selection_method="tournament"):
     best_fitness_overall = -float('inf')
     max_fitness_history = []
     avg_fitness_history = []
+    gen_times = []
+
+    evolution_start = time.time()
 
     for generation in range(GENERATIONS):
+        gen_start = time.time()
+
         fitnesses = [evaluate_fitness(ind, env) for ind in population]
 
         max_fitness = max(fitnesses)
@@ -179,7 +185,15 @@ def run_evolution(env, selection_method="tournament"):
             best_fitness_overall = max_fitness
             best_individual_overall = np.copy(population[best_idx])
 
-        print(f"Generation {generation + 1}/{GENERATIONS} | Max Fit: {max_fitness:.3f} | Avg Fit: {avg_fitness:.3f}")
+        gen_elapsed = time.time() - gen_start
+        gen_times.append(gen_elapsed)
+        total_elapsed = time.time() - evolution_start
+
+        print(
+            f"Generation {generation + 1}/{GENERATIONS} | "
+            f"Max Fit: {max_fitness:.3f} | Avg Fit: {avg_fitness:.3f} | "
+            f"Gen: {gen_elapsed:.1f}s | Total: {total_elapsed:.0f}s"
+        )
 
         new_population = [population[best_idx]]  # elitism
 
@@ -196,4 +210,5 @@ def run_evolution(env, selection_method="tournament"):
 
         population = new_population
 
-    return best_individual_overall, best_fitness_overall, max_fitness_history, avg_fitness_history
+    total_time = time.time() - evolution_start
+    return best_individual_overall, best_fitness_overall, max_fitness_history, avg_fitness_history, total_time
