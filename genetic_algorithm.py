@@ -152,12 +152,13 @@ def mutate(individual, mutation_rate=MUTATION_RATE):
     return mutated
 
 
-def run_evolution(env, selection_method="tournament"):
+def run_evolution(env, selection_method="tournament", progress_callback=None):
     """Runs the genetic algorithm evolution.
 
     Args:
         env: Gymnasium environment (render_mode=None for training).
         selection_method: "tournament" or "rank".
+        progress_callback: optional callable(generation, max_fit, avg_fit, elapsed_seconds).
     """
     print(f"Starting Evolution... [selection: {selection_method}]")
     population = create_population(POPULATION_SIZE, DNA_SIZE)
@@ -194,6 +195,9 @@ def run_evolution(env, selection_method="tournament"):
             f"Max Fit: {max_fitness:.3f} | Avg Fit: {avg_fitness:.3f} | "
             f"Gen: {gen_elapsed:.1f}s | Total: {total_elapsed:.0f}s"
         )
+
+        if progress_callback:
+            progress_callback(generation + 1, max_fitness, avg_fitness, total_elapsed)
 
         new_population = [population[best_idx]]  # elitism
 

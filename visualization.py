@@ -5,6 +5,103 @@ except ImportError:
     HAS_MATPLOTLIB = False
 
 
+class EvolutionDisplay:
+    """Pygame window that shows live evolution progress during training."""
+
+    _W, _H = 620, 420
+    _BG = (15, 15, 25)
+
+    def __init__(self, total_generations, selection_method):
+        import pygame
+        pygame.init()
+        self._pg = pygame
+        self.screen = pygame.display.set_mode((self._W, self._H))
+        pygame.display.set_caption(f"GA Evolution — {selection_method} selection")
+        self._total = total_generations
+        self._method = selection_method
+        self._f_large = pygame.font.SysFont("Arial", 30, bold=True)
+        self._f_med = pygame.font.SysFont("Arial", 21)
+        self._max_hist = []
+        self._avg_hist = []
+
+    def update(self, generation, max_fitness, avg_fitness, elapsed):
+        self._max_hist.append(max_fitness)
+        self._avg_hist.append(avg_fitness)
+
+        for event in self._pg.event.get():
+            pass  # keep window responsive
+
+        self.screen.fill(self._BG)
+
+        title = self._f_large.render("EVOLUTION IN PROGRESS", True, (200, 200, 255))
+        self.screen.blit(title, (self._W // 2 - title.get_width() // 2, 18))
+
+        sel = self._f_med.render(f"Selection: {self._method}", True, (160, 160, 160))
+        self.screen.blit(sel, (self._W // 2 - sel.get_width() // 2, 56))
+
+        gen_txt = self._f_large.render(
+            f"Generation  {generation} / {self._total}", True, (255, 255, 255)
+        )
+        self.screen.blit(gen_txt, (self._W // 2 - gen_txt.get_width() // 2, 92))
+
+        # progress bar
+        bx, by, bw, bh = 50, 138, self._W - 100, 18
+        self._pg.draw.rect(self.screen, (40, 40, 70), (bx, by, bw, bh))
+        fill = int(bw * generation / self._total)
+        self._pg.draw.rect(self.screen, (70, 150, 255), (bx, by, fill, bh))
+        self._pg.draw.rect(self.screen, (130, 130, 190), (bx, by, bw, bh), 2)
+
+        max_col = (80, 240, 80) if max_fitness >= 0 else (240, 80, 80)
+        self.screen.blit(
+            self._f_med.render(f"Best Fitness:  {max_fitness:.3f}", True, max_col), (50, 172)
+        )
+        self.screen.blit(
+            self._f_med.render(f"Avg  Fitness:  {avg_fitness:.3f}", True, (220, 200, 80)), (50, 200)
+        )
+
+        m, s = int(elapsed // 60), int(elapsed % 60)
+        self.screen.blit(
+            self._f_med.render(f"Elapsed:  {m:02d}:{s:02d}", True, (160, 160, 160)), (50, 232)
+        )
+
+        if len(self._max_hist) > 1:
+            self._draw_graph()
+
+        self._pg.display.flip()
+
+    def _draw_graph(self):
+        gx, gy, gw, gh = 50, 272, self._W - 100, 120
+        self._pg.draw.rect(self.screen, (28, 28, 48), (gx, gy, gw, gh))
+        self._pg.draw.rect(self.screen, (70, 70, 110), (gx, gy, gw, gh), 1)
+
+        all_v = self._max_hist + self._avg_hist
+        lo, hi = min(all_v), max(all_v)
+        span = hi - lo if hi != lo else 1.0
+        n = len(self._max_hist)
+
+        def px(val, idx):
+            x = gx + int(idx / max(n - 1, 1) * gw)
+            y = gy + gh - int((val - lo) / span * gh)
+            return (x, max(gy, min(gy + gh, y)))
+
+        for hist, col in [(self._max_hist, (80, 220, 80)), (self._avg_hist, (220, 200, 60))]:
+            pts = [px(v, i) for i, v in enumerate(hist)]
+            self._pg.draw.lines(self.screen, col, False, pts, 2)
+
+        leg_y = gy + gh + 6
+        self._pg.draw.line(self.screen, (80, 220, 80), (gx, leg_y + 7), (gx + 20, leg_y + 7), 2)
+        self.screen.blit(
+            self._pg.font.SysFont("Arial", 14).render("Max", True, (80, 220, 80)), (gx + 24, leg_y)
+        )
+        self._pg.draw.line(self.screen, (220, 200, 60), (gx + 70, leg_y + 7), (gx + 90, leg_y + 7), 2)
+        self.screen.blit(
+            self._pg.font.SysFont("Arial", 14).render("Avg", True, (220, 200, 60)), (gx + 94, leg_y)
+        )
+
+    def close(self):
+        self._pg.quit()
+
+
 def draw_game_summary(screen, game_results):
     import pygame
 

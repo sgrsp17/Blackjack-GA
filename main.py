@@ -1,14 +1,20 @@
 import numpy as np
 import gymnasium as gym
-from genetic_algorithm import run_evolution, evaluate_fitness
-from visualization import plot_fitness_history
+from genetic_algorithm import run_evolution, evaluate_fitness, GENERATIONS
+from visualization import plot_fitness_history, EvolutionDisplay
+
+SELECTION_METHOD = "tournament"  # "tournament" or "rank"
 
 
 def main():
     """Orchestrates the neuroevolution training and best-agent playback."""
-    # Train the population
     env = gym.make('Blackjack-v1', render_mode=None)
-    best_individual, best_fitness, max_fitness_history, avg_fitness_history, total_time = run_evolution(env)
+
+    display = EvolutionDisplay(GENERATIONS, SELECTION_METHOD)
+    best_individual, best_fitness, max_fitness_history, avg_fitness_history, total_time = run_evolution(
+        env, selection_method=SELECTION_METHOD, progress_callback=display.update
+    )
+    display.close()
     env.close()
 
     print("\nEvolution Completed!")
