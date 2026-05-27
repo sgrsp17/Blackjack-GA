@@ -1,7 +1,7 @@
 import numpy as np
 import gymnasium as gym
 from genetic_algorithm import run_evolution, evaluate_fitness, GENERATIONS
-from visualization import plot_fitness_history, EvolutionDisplay
+from visualization import plot_fitness_history, EvolutionDisplay, show_evolution_summary
 
 SELECTION_METHOD = "tournament"  # "tournament" or "rank"
 
@@ -20,15 +20,14 @@ def main():
     print("\nEvolution Completed!")
     print(f"Best Overall Fitness: {best_fitness:.3f}")
     print(f"Total Training Time:  {total_time:.1f}s")
-    
-    # Save the best agent
+
     np.save('best_agent.npy', best_individual)
     print("Best agent weights saved to 'best_agent.npy'!")
-    
-    # Plot the fitness evolution
+
     plot_fitness_history(max_fitness_history, avg_fitness_history)
 
-    # Play with the best trained agent
+    show_evolution_summary(best_fitness, total_time, SELECTION_METHOD, GENERATIONS)
+
     print("\n--- Playing the BEST TRAINED individual ---")
     try:
         env_visual = gym.make('Blackjack-v1', render_mode="human")

@@ -102,6 +102,50 @@ class EvolutionDisplay:
         self._pg.quit()
 
 
+def show_evolution_summary(best_fitness, total_time, selection_method, generations):
+    """Blocking pygame screen shown after training, before playback. Press any key to continue."""
+    import pygame
+    pygame.init()
+    W, H = 520, 320
+    screen = pygame.display.set_mode((W, H))
+    pygame.display.set_caption("Evolution Complete")
+
+    f_title = pygame.font.SysFont("Arial", 34, bold=True)
+    f_med = pygame.font.SysFont("Arial", 22)
+    f_small = pygame.font.SysFont("Arial", 16)
+    BG, ACCENT = (15, 15, 25), (80, 200, 120)
+    clock = pygame.time.Clock()
+
+    m, s = int(total_time // 60), int(total_time % 60)
+    lines = [
+        ("EVOLUTION COMPLETE", f_title, (80, 240, 80), 40),
+        (f"Selection Method:  {selection_method}", f_med, (200, 200, 255), 110),
+        (f"Generations:       {generations}", f_med, (200, 200, 200), 142),
+        (f"Best Fitness:      {best_fitness:.3f}", f_med, (80, 240, 80) if best_fitness >= 0 else (240, 80, 80), 174),
+        (f"Total Time:        {m:02d}:{s:02d}", f_med, (200, 200, 200), 206),
+        ("Press any key to watch the best agent play...", f_small, (120, 120, 120), 270),
+    ]
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type in (pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                waiting = False
+
+        screen.fill(BG)
+        pygame.draw.line(screen, ACCENT, (40, 90), (W - 40, 90), 2)
+        pygame.draw.line(screen, (60, 60, 90), (40, 250), (W - 40, 250), 1)
+
+        for text, font, color, y in lines:
+            surf = font.render(text, True, color)
+            screen.blit(surf, (W // 2 - surf.get_width() // 2, y))
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+
+
 def draw_game_summary(screen, game_results):
     import pygame
 
