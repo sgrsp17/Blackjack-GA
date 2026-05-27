@@ -195,21 +195,22 @@ def draw_game_summary(screen, game_results):
     pygame.display.update()
 
 
-def plot_fitness_history(max_history, avg_history):
+def plot_fitness_history(max_history, avg_history, selection_method="tournament"):
     if not HAS_MATPLOTLIB:
         print("\n[Warning] matplotlib is not installed. Install it with `pip install matplotlib` to see the fitness graph.")
         return
 
+    filename = f"fitness_evolution_{selection_method}.png"
     generations = list(range(1, len(max_history) + 1))
     plt.figure(figsize=(10, 6))
     plt.plot(generations, max_history, label='Max Fitness', marker='o')
     plt.plot(generations, avg_history, label='Average Fitness', marker='o')
-    plt.title('Fitness Evolution Across Generations')
+    plt.title(f'Fitness Evolution — {selection_method} selection')
     plt.xlabel('Generation')
     plt.ylabel('Average Reward')
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    plt.savefig('fitness_evolution.png')
-    print("Fitness graph saved to 'fitness_evolution.png'.")
+    plt.savefig(filename)
+    print(f"Fitness graph saved to '{filename}'.")
     plt.show()

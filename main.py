@@ -3,7 +3,7 @@ import gymnasium as gym
 from genetic_algorithm import run_evolution, evaluate_fitness, GENERATIONS
 from visualization import plot_fitness_history, EvolutionDisplay, show_evolution_summary
 
-SELECTION_METHOD = "tournament"  # "tournament" or "rank"
+SELECTION_METHOD = "rank"  # "tournament" or "rank"
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     np.save('best_agent.npy', best_individual)
     print("Best agent weights saved to 'best_agent.npy'!")
 
-    plot_fitness_history(max_fitness_history, avg_fitness_history)
+    plot_fitness_history(max_fitness_history, avg_fitness_history, SELECTION_METHOD)
 
     show_evolution_summary(best_fitness, total_time, SELECTION_METHOD, GENERATIONS)
 
