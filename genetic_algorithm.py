@@ -109,6 +109,25 @@ def tournament_selection(population, fitnesses, k=TOURNAMENT_SIZE):
     return population[best_index]
 
 
+def rank_selection(population, fitnesses):
+    """Selects an individual using linear rank-based probability.
+
+    Ranks individuals from worst (rank 1) to best (rank N) and assigns
+    selection probability proportional to rank, avoiding issues with
+    negative fitness values that break roulette-wheel selection.
+    """
+    n = len(population)
+    sorted_indices = sorted(range(n), key=lambda i: fitnesses[i])
+    # rank[i] = position in sorted order (1-based), so best gets rank N
+    ranks = [0] * n
+    for rank, idx in enumerate(sorted_indices, start=1):
+        ranks[idx] = rank
+    total = n * (n + 1) / 2
+    probabilities = [ranks[i] / total for i in range(n)]
+    chosen = random.choices(range(n), weights=probabilities, k=1)[0]
+    return population[chosen]
+
+
 def crossover(parent1, parent2):
     """Uniform crossover: randomly chooses genes from both parents."""
     child = np.zeros_like(parent1)
@@ -132,52 +151,49 @@ def mutate(individual, mutation_rate=MUTATION_RATE):
     return mutated
 
 
-def run_evolution(env):
-    """Runs the genetic algorithm evolution."""
-    print("Starting Evolution...")
+def run_evolution(env, selection_method="tournament"):
+    """Runs the genetic algorithm evolution.
+
+    Args:
+        env: Gymnasium environment (render_mode=None for training).
+        selection_method: "tournament" or "rank".
+    """
+    print(f"Starting Evolution... [selection: {selection_method}]")
     population = create_population(POPULATION_SIZE, DNA_SIZE)
-    
+
     best_individual_overall = None
     best_fitness_overall = -float('inf')
     max_fitness_history = []
     avg_fitness_history = []
 
     for generation in range(GENERATIONS):
-        # 1. Evaluate the population
         fitnesses = [evaluate_fitness(ind, env) for ind in population]
-        
+
         max_fitness = max(fitnesses)
         avg_fitness = sum(fitnesses) / POPULATION_SIZE
         max_fitness_history.append(max_fitness)
         avg_fitness_history.append(avg_fitness)
-        
-        # Save the all-time best
+
         best_idx = fitnesses.index(max_fitness)
         if max_fitness > best_fitness_overall:
             best_fitness_overall = max_fitness
             best_individual_overall = np.copy(population[best_idx])
-            
+
         print(f"Generation {generation + 1}/{GENERATIONS} | Max Fit: {max_fitness:.3f} | Avg Fit: {avg_fitness:.3f}")
-        
-        # 2. Create the new generation
-        new_population = []
-        
-        # Elitism: Pass the best of this generation directly to the next
-        new_population.append(population[best_idx])
-        
+
+        new_population = [population[best_idx]]  # elitism
+
         while len(new_population) < POPULATION_SIZE:
-            # Selection
-            parent1 = tournament_selection(population, fitnesses)
-            parent2 = tournament_selection(population, fitnesses)
-            
-            # Crossover
-            child = crossover(parent1, parent2)
-            
-            # Mutation
-            child = mutate(child)
-            
+            if selection_method == "rank":
+                parent1 = rank_selection(population, fitnesses)
+                parent2 = rank_selection(population, fitnesses)
+            else:
+                parent1 = tournament_selection(population, fitnesses)
+                parent2 = tournament_selection(population, fitnesses)
+
+            child = mutate(crossover(parent1, parent2))
             new_population.append(child)
-            
+
         population = new_population
 
     return best_individual_overall, best_fitness_overall, max_fitness_history, avg_fitness_history
