@@ -175,12 +175,12 @@ def draw_game_summary(screen, game_results):
     font_title = pygame.font.SysFont('Arial', 24, bold=True)
     font_text = pygame.font.SysFont('Arial', 20)
 
-    title_surface = font_title.render('JOGOS', True, (255, 255, 255))
+    title_surface = font_title.render('GAMES', True, (255, 255, 255))
     sidebar.blit(title_surface, (10, 10))
 
     start_index = max(0, len(game_results) - 10)
     for idx, result in enumerate(game_results[start_index:], start_index + 1):
-        line = f'Jogo {idx}: {result}'
+        line = f'GAME {idx}: {result}'
         color = (255, 255, 255)
         if result == 'W':
             color = (0, 255, 0)
@@ -193,6 +193,28 @@ def draw_game_summary(screen, game_results):
 
     screen.blit(sidebar, (original_width + 10, 10))
     pygame.display.update()
+
+
+def plot_comparison(tournament_max, tournament_avg, rank_max, rank_avg):
+    if not HAS_MATPLOTLIB:
+        print("\n[Warning] matplotlib is not installed.")
+        return
+
+    generations = list(range(1, len(tournament_max) + 1))
+    plt.figure(figsize=(12, 6))
+    plt.plot(generations, tournament_max, label='Tournament — Max', color='royalblue')
+    plt.plot(generations, tournament_avg, label='Tournament — Avg', color='royalblue', linestyle='--', alpha=0.6)
+    plt.plot(generations, rank_max, label='Rank — Max', color='tomato')
+    plt.plot(generations, rank_avg, label='Rank — Avg', color='tomato', linestyle='--', alpha=0.6)
+    plt.title('Selection Method Comparison — Fitness Evolution')
+    plt.xlabel('Generation')
+    plt.ylabel('Average Reward')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig('fitness_evolution_comparison.png')
+    print("Comparison graph saved to 'fitness_evolution_comparison.png'.")
+    plt.show()
 
 
 def plot_fitness_history(max_history, avg_history, selection_method="tournament"):
