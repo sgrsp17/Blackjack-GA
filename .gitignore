@@ -15,7 +15,7 @@ build/
 
 # Generated files (training outputs)
 best_agent.npy
-fitness_evolution.png
+fitness_evolution*.png
 
 # IDE
 .vscode/
