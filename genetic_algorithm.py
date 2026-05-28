@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import random
 from neural_network import NeuralNetwork
@@ -109,6 +110,25 @@ def tournament_selection(population, fitnesses, k=TOURNAMENT_SIZE):
     return population[best_index]
 
 
+def rank_selection(population, fitnesses):
+    """Selects an individual using linear rank-based probability.
+
+    Ranks individuals from worst (rank 1) to best (rank N) and assigns
+    selection probability proportional to rank, avoiding issues with
+    negative fitness values that break roulette-wheel selection.
+    """
+    n = len(population)
+    sorted_indices = sorted(range(n), key=lambda i: fitnesses[i])
+    # rank[i] = position in sorted order (1-based), so best gets rank N
+    ranks = [0] * n
+    for rank, idx in enumerate(sorted_indices, start=1):
+        ranks[idx] = rank
+    total = n * (n + 1) / 2
+    probabilities = [ranks[i] / total for i in range(n)]
+    chosen = random.choices(range(n), weights=probabilities, k=1)[0]
+    return population[chosen]
+
+
 def crossover(parent1, parent2):
     """Uniform crossover: randomly chooses genes from both parents."""
     child = np.zeros_like(parent1)
@@ -132,52 +152,67 @@ def mutate(individual, mutation_rate=MUTATION_RATE):
     return mutated
 
 
-def run_evolution(env):
-    """Runs the genetic algorithm evolution."""
-    print("Starting Evolution...")
+def run_evolution(env, selection_method="tournament", progress_callback=None):
+    """Runs the genetic algorithm evolution.
+
+    Args:
+        env: Gymnasium environment (render_mode=None for training).
+        selection_method: "tournament" or "rank".
+        progress_callback: optional callable(generation, max_fit, avg_fit, elapsed_seconds).
+    """
+    print(f"Starting Evolution... [selection: {selection_method}]")
     population = create_population(POPULATION_SIZE, DNA_SIZE)
-    
+
     best_individual_overall = None
     best_fitness_overall = -float('inf')
     max_fitness_history = []
     avg_fitness_history = []
+    gen_times = []
+
+    evolution_start = time.time()
 
     for generation in range(GENERATIONS):
-        # 1. Evaluate the population
+        gen_start = time.time()
+
         fitnesses = [evaluate_fitness(ind, env) for ind in population]
-        
+
         max_fitness = max(fitnesses)
         avg_fitness = sum(fitnesses) / POPULATION_SIZE
         max_fitness_history.append(max_fitness)
         avg_fitness_history.append(avg_fitness)
-        
-        # Save the all-time best
+
         best_idx = fitnesses.index(max_fitness)
         if max_fitness > best_fitness_overall:
             best_fitness_overall = max_fitness
             best_individual_overall = np.copy(population[best_idx])
-            
-        print(f"Generation {generation + 1}/{GENERATIONS} | Max Fit: {max_fitness:.3f} | Avg Fit: {avg_fitness:.3f}")
-        
-        # 2. Create the new generation
-        new_population = []
-        
-        # Elitism: Pass the best of this generation directly to the next
-        new_population.append(population[best_idx])
-        
+
+        gen_elapsed = time.time() - gen_start
+        gen_times.append(gen_elapsed)
+        total_elapsed = time.time() - evolution_start
+
+        print(
+            f"Generation {generation + 1}/{GENERATIONS} | "
+            f"Max Fit: {max_fitness:.3f} | Avg Fit: {avg_fitness:.3f} | "
+            f"Gen: {gen_elapsed:.1f}s | Total: {total_elapsed:.0f}s"
+        )
+
+        if progress_callback:
+            progress_callback(generation + 1, max_fitness, avg_fitness, total_elapsed)
+
+        new_population = [population[best_idx]]  # elitism
+
         while len(new_population) < POPULATION_SIZE:
-            # Selection
-            parent1 = tournament_selection(population, fitnesses)
-            parent2 = tournament_selection(population, fitnesses)
-            
-            # Crossover
-            child = crossover(parent1, parent2)
-            
-            # Mutation
-            child = mutate(child)
-            
+            if selection_method == "rank":
+                parent1 = rank_selection(population, fitnesses)
+                parent2 = rank_selection(population, fitnesses)
+            else:
+                parent1 = tournament_selection(population, fitnesses)
+                parent2 = tournament_selection(population, fitnesses)
+
+            child = mutate(crossover(parent1, parent2))
             new_population.append(child)
-            
+
         population = new_population
 
-    return best_individual_overall, best_fitness_overall, max_fitness_history, avg_fitness_history
+    total_time = time.time() - evolution_start
+    return best_individual_overall, best_fitness_overall, max_fitness_history, avg_fitness_history, total_time

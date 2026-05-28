@@ -5,6 +5,147 @@ except ImportError:
     HAS_MATPLOTLIB = False
 
 
+class EvolutionDisplay:
+    """Pygame window that shows live evolution progress during training."""
+
+    _W, _H = 620, 420
+    _BG = (15, 15, 25)
+
+    def __init__(self, total_generations, selection_method):
+        import pygame
+        pygame.init()
+        self._pg = pygame
+        self.screen = pygame.display.set_mode((self._W, self._H))
+        pygame.display.set_caption(f"GA Evolution — {selection_method} selection")
+        self._total = total_generations
+        self._method = selection_method
+        self._f_large = pygame.font.SysFont("Arial", 30, bold=True)
+        self._f_med = pygame.font.SysFont("Arial", 21)
+        self._max_hist = []
+        self._avg_hist = []
+
+    def update(self, generation, max_fitness, avg_fitness, elapsed):
+        self._max_hist.append(max_fitness)
+        self._avg_hist.append(avg_fitness)
+
+        for event in self._pg.event.get():
+            pass  # keep window responsive
+
+        self.screen.fill(self._BG)
+
+        title = self._f_large.render("EVOLUTION IN PROGRESS", True, (200, 200, 255))
+        self.screen.blit(title, (self._W // 2 - title.get_width() // 2, 18))
+
+        sel = self._f_med.render(f"Selection: {self._method}", True, (160, 160, 160))
+        self.screen.blit(sel, (self._W // 2 - sel.get_width() // 2, 56))
+
+        gen_txt = self._f_large.render(
+            f"Generation  {generation} / {self._total}", True, (255, 255, 255)
+        )
+        self.screen.blit(gen_txt, (self._W // 2 - gen_txt.get_width() // 2, 92))
+
+        # progress bar
+        bx, by, bw, bh = 50, 138, self._W - 100, 18
+        self._pg.draw.rect(self.screen, (40, 40, 70), (bx, by, bw, bh))
+        fill = int(bw * generation / self._total)
+        self._pg.draw.rect(self.screen, (70, 150, 255), (bx, by, fill, bh))
+        self._pg.draw.rect(self.screen, (130, 130, 190), (bx, by, bw, bh), 2)
+
+        max_col = (80, 240, 80) if max_fitness >= 0 else (240, 80, 80)
+        self.screen.blit(
+            self._f_med.render(f"Best Fitness:  {max_fitness:.3f}", True, max_col), (50, 172)
+        )
+        self.screen.blit(
+            self._f_med.render(f"Avg  Fitness:  {avg_fitness:.3f}", True, (220, 200, 80)), (50, 200)
+        )
+
+        m, s = int(elapsed // 60), int(elapsed % 60)
+        self.screen.blit(
+            self._f_med.render(f"Elapsed:  {m:02d}:{s:02d}", True, (160, 160, 160)), (50, 232)
+        )
+
+        if len(self._max_hist) > 1:
+            self._draw_graph()
+
+        self._pg.display.flip()
+
+    def _draw_graph(self):
+        gx, gy, gw, gh = 50, 272, self._W - 100, 120
+        self._pg.draw.rect(self.screen, (28, 28, 48), (gx, gy, gw, gh))
+        self._pg.draw.rect(self.screen, (70, 70, 110), (gx, gy, gw, gh), 1)
+
+        all_v = self._max_hist + self._avg_hist
+        lo, hi = min(all_v), max(all_v)
+        span = hi - lo if hi != lo else 1.0
+        n = len(self._max_hist)
+
+        def px(val, idx):
+            x = gx + int(idx / max(n - 1, 1) * gw)
+            y = gy + gh - int((val - lo) / span * gh)
+            return (x, max(gy, min(gy + gh, y)))
+
+        for hist, col in [(self._max_hist, (80, 220, 80)), (self._avg_hist, (220, 200, 60))]:
+            pts = [px(v, i) for i, v in enumerate(hist)]
+            self._pg.draw.lines(self.screen, col, False, pts, 2)
+
+        leg_y = gy + gh + 6
+        self._pg.draw.line(self.screen, (80, 220, 80), (gx, leg_y + 7), (gx + 20, leg_y + 7), 2)
+        self.screen.blit(
+            self._pg.font.SysFont("Arial", 14).render("Max", True, (80, 220, 80)), (gx + 24, leg_y)
+        )
+        self._pg.draw.line(self.screen, (220, 200, 60), (gx + 70, leg_y + 7), (gx + 90, leg_y + 7), 2)
+        self.screen.blit(
+            self._pg.font.SysFont("Arial", 14).render("Avg", True, (220, 200, 60)), (gx + 94, leg_y)
+        )
+
+    def close(self):
+        self._pg.quit()
+
+
+def show_evolution_summary(best_fitness, total_time, selection_method, generations):
+    """Blocking pygame screen shown after training, before playback. Press any key to continue."""
+    import pygame
+    pygame.init()
+    W, H = 520, 320
+    screen = pygame.display.set_mode((W, H))
+    pygame.display.set_caption("Evolution Complete")
+
+    f_title = pygame.font.SysFont("Arial", 34, bold=True)
+    f_med = pygame.font.SysFont("Arial", 22)
+    f_small = pygame.font.SysFont("Arial", 16)
+    BG, ACCENT = (15, 15, 25), (80, 200, 120)
+    clock = pygame.time.Clock()
+
+    m, s = int(total_time // 60), int(total_time % 60)
+    lines = [
+        ("EVOLUTION COMPLETE", f_title, (80, 240, 80), 40),
+        (f"Selection Method:  {selection_method}", f_med, (200, 200, 255), 110),
+        (f"Generations:       {generations}", f_med, (200, 200, 200), 142),
+        (f"Best Fitness:      {best_fitness:.3f}", f_med, (80, 240, 80) if best_fitness >= 0 else (240, 80, 80), 174),
+        (f"Total Time:        {m:02d}:{s:02d}", f_med, (200, 200, 200), 206),
+        ("Press any key to watch the best agent play...", f_small, (120, 120, 120), 270),
+    ]
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type in (pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                waiting = False
+
+        screen.fill(BG)
+        pygame.draw.line(screen, ACCENT, (40, 90), (W - 40, 90), 2)
+        pygame.draw.line(screen, (60, 60, 90), (40, 250), (W - 40, 250), 1)
+
+        for text, font, color, y in lines:
+            surf = font.render(text, True, color)
+            screen.blit(surf, (W // 2 - surf.get_width() // 2, y))
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+
+
 def draw_game_summary(screen, game_results):
     import pygame
 
@@ -34,12 +175,12 @@ def draw_game_summary(screen, game_results):
     font_title = pygame.font.SysFont('Arial', 24, bold=True)
     font_text = pygame.font.SysFont('Arial', 20)
 
-    title_surface = font_title.render('JOGOS', True, (255, 255, 255))
+    title_surface = font_title.render('GAMES', True, (255, 255, 255))
     sidebar.blit(title_surface, (10, 10))
 
     start_index = max(0, len(game_results) - 10)
     for idx, result in enumerate(game_results[start_index:], start_index + 1):
-        line = f'Jogo {idx}: {result}'
+        line = f'GAME {idx}: {result}'
         color = (255, 255, 255)
         if result == 'W':
             color = (0, 255, 0)
@@ -54,21 +195,44 @@ def draw_game_summary(screen, game_results):
     pygame.display.update()
 
 
-def plot_fitness_history(max_history, avg_history):
+def plot_comparison(tournament_max, tournament_avg, rank_max, rank_avg):
     if not HAS_MATPLOTLIB:
-        print("\n[Warning] matplotlib is not installed. Install it with `pip install matplotlib` to see the fitness graph.")
+        print("\n[Warning] matplotlib is not installed.")
         return
 
-    generations = list(range(1, len(max_history) + 1))
-    plt.figure(figsize=(10, 6))
-    plt.plot(generations, max_history, label='Max Fitness', marker='o')
-    plt.plot(generations, avg_history, label='Average Fitness', marker='o')
-    plt.title('Fitness Evolution Across Generations')
+    generations = list(range(1, len(tournament_max) + 1))
+    plt.figure(figsize=(12, 6))
+    plt.plot(generations, tournament_max, label='Tournament — Max', color='royalblue')
+    plt.plot(generations, tournament_avg, label='Tournament — Avg', color='royalblue', linestyle='--', alpha=0.6)
+    plt.plot(generations, rank_max, label='Rank — Max', color='tomato')
+    plt.plot(generations, rank_avg, label='Rank — Avg', color='tomato', linestyle='--', alpha=0.6)
+    plt.title('Selection Method Comparison — Fitness Evolution')
     plt.xlabel('Generation')
     plt.ylabel('Average Reward')
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    plt.savefig('fitness_evolution.png')
-    print("Fitness graph saved to 'fitness_evolution.png'.")
+    plt.savefig('fitness_evolution_comparison.png')
+    print("Comparison graph saved to 'fitness_evolution_comparison.png'.")
+    plt.show()
+
+
+def plot_fitness_history(max_history, avg_history, selection_method="tournament"):
+    if not HAS_MATPLOTLIB:
+        print("\n[Warning] matplotlib is not installed. Install it with `pip install matplotlib` to see the fitness graph.")
+        return
+
+    filename = f"fitness_evolution_{selection_method}.png"
+    generations = list(range(1, len(max_history) + 1))
+    plt.figure(figsize=(10, 6))
+    plt.plot(generations, max_history, label='Max Fitness', marker='o')
+    plt.plot(generations, avg_history, label='Average Fitness', marker='o')
+    plt.title(f'Fitness Evolution — {selection_method} selection')
+    plt.xlabel('Generation')
+    plt.ylabel('Average Reward')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(filename)
+    print(f"Fitness graph saved to '{filename}'.")
     plt.show()
