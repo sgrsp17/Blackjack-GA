@@ -3,7 +3,7 @@ import gymnasium as gym
 from genetic_algorithm import run_evolution, evaluate_fitness, GENERATIONS
 from visualization import plot_fitness_history, plot_comparison, EvolutionDisplay, show_evolution_summary
 
-SELECTION_METHOD = "rank"  # "tournament" or "rank" — used when COMPARE_MODE is False
+SELECTION_METHOD = "tournament"  # "tournament" or "rank" — used when COMPARE_MODE is False
 COMPARE_MODE = False            # True: runs both methods and plots a comparison graph
 
 

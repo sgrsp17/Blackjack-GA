@@ -147,7 +147,7 @@ def crossover(parent1, parent2, method="uniform"):
         point2 = random.randint(point1 + 1, dna_length - 1)
         child[:point1] = parent1[:point1]
         child[point1:point2] = parent2[point1:point2]
-        child[point2:] = parent1[point2:]
+        child[point2:] = parent2[point2:]
     else:
         raise ValueError(f"Unknown crossover method: {method}")
         
