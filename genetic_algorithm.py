@@ -129,14 +129,28 @@ def rank_selection(population, fitnesses):
     return population[chosen]
 
 
-def crossover(parent1, parent2):
-    """Uniform crossover: randomly chooses genes from both parents."""
+def crossover(parent1, parent2, method="uniform"):
+    """Performs crossover between two parents using the specified method."""
     child = np.zeros_like(parent1)
-    for i in range(len(parent1)):
-        if random.random() < 0.5:
-            child[i] = parent1[i]
-        else:
-            child[i] = parent2[i]
+    dna_length = len(parent1)
+    
+    if method == "uniform":
+        for i in range(dna_length):
+            child[i] = parent1[i] if random.random() < 0.5 else parent2[i]
+    elif method == "single_point":
+        point = random.randint(1, dna_length - 1)
+        child[:point] = parent1[:point]
+        child[point:] = parent2[point:]
+    elif method == "multi_point":
+        # 2-point crossover
+        point1 = random.randint(1, dna_length - 2)
+        point2 = random.randint(point1 + 1, dna_length - 1)
+        child[:point1] = parent1[:point1]
+        child[point1:point2] = parent2[point1:point2]
+        child[point2:] = parent1[point2:]
+    else:
+        raise ValueError(f"Unknown crossover method: {method}")
+        
     return child
 
 
@@ -152,12 +166,14 @@ def mutate(individual, mutation_rate=MUTATION_RATE):
     return mutated
 
 
-def run_evolution(env, selection_method="tournament", progress_callback=None):
+def run_evolution(env, selection_method="tournament", crossover_method="uniform", mutation_rate=MUTATION_RATE, progress_callback=None):
     """Runs the genetic algorithm evolution.
 
     Args:
         env: Gymnasium environment (render_mode=None for training).
         selection_method: "tournament" or "rank".
+        crossover_method: "uniform", "single_point", or "multi_point".
+        mutation_rate: Probability of mutation for each gene.
         progress_callback: optional callable(generation, max_fit, avg_fit, elapsed_seconds).
     """
     print(f"Starting Evolution... [selection: {selection_method}]")
@@ -209,7 +225,7 @@ def run_evolution(env, selection_method="tournament", progress_callback=None):
                 parent1 = tournament_selection(population, fitnesses)
                 parent2 = tournament_selection(population, fitnesses)
 
-            child = mutate(crossover(parent1, parent2))
+            child = mutate(crossover(parent1, parent2, method=crossover_method), mutation_rate=mutation_rate)
             new_population.append(child)
 
         population = new_population

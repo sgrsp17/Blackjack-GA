@@ -3,8 +3,8 @@ import gymnasium as gym
 from genetic_algorithm import run_evolution, evaluate_fitness, GENERATIONS
 from visualization import plot_fitness_history, plot_comparison, EvolutionDisplay, show_evolution_summary
 
-SELECTION_METHOD = "tournament"  # "tournament" or "rank" — used when COMPARE_MODE is False
-COMPARE_MODE = False             # True: runs both methods and plots a comparison graph
+SELECTION_METHOD = "rank"  # "tournament" or "rank" — used when COMPARE_MODE is False
+COMPARE_MODE = False            # True: runs both methods and plots a comparison graph
 
 
 def run_method(method):
@@ -50,7 +50,7 @@ def main():
     print("\n--- Playing the BEST TRAINED individual ---")
     try:
         env_visual = gym.make('Blackjack-v1', render_mode="human")
-        evaluate_fitness(best_individual, env_visual, n_games=5, verbose=True, agent_type="thinking")
+        evaluate_fitness(best_individual, env_visual, n_games=10, verbose=True, agent_type="thinking")
         env_visual.close()
     except Exception as e:
         print(f"\n[Warning] An error occurred while trying to open the visual Pygame window: {e}")
