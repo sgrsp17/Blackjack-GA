@@ -18,8 +18,11 @@ def create_population(size, dna_size):
     return [np.random.uniform(-1, 1, dna_size) for _ in range(size)]
 
 
-def evaluate_fitness(individual, env, n_games=N_GAMES, verbose=False, agent_type="thinking"):
-    """Evaluates an individual by playing N_GAMES and returning the average reward."""
+def evaluate_fitness(individual, env, n_games=N_GAMES, verbose=False, agent_type="thinking", return_stats=False):
+    """Evaluates an individual by playing N_GAMES and returning the average reward.
+
+    If return_stats is True, returns (avg_reward, win_rate) instead.
+    """
     nn = NeuralNetwork(weights=individual)
     total_reward = 0.0
 
@@ -93,6 +96,8 @@ def evaluate_fitness(individual, env, n_games=N_GAMES, verbose=False, agent_type
         print(f"Draws:  {draws}")
         print("-----------------------------------")
 
+    if return_stats:
+        return total_reward / n_games, wins / n_games
     return total_reward / n_games
 
 
