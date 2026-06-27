@@ -188,3 +188,4 @@ if __name__ == "__main__":
     analyze_crossover_methods()
     compare_best_combinations()
     print("\nAnalysis complete! Check 'mutation_analysis.png', 'crossover_analysis_tournament.png', 'crossover_analysis_rank.png', 'crossover_analysis.png' and 'best_combination.png'.")
+
