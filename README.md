@@ -12,13 +12,18 @@ The environment used is `Blackjack-v1` from [Gymnasium](https://gymnasium.farama
 
 ```
 Blackjack_BIAI/
-├── main.py                  # Entry point — orchestrates training and playback
-├── genetic_algorithm.py     # GA logic: population, fitness, selection, crossover, mutation
-├── neural_network.py        # Feedforward neural network (agent controller)
-├── visualization.py         # Live training display, game sidebar, fitness graphs
-├── test_agent.py            # Utility to test a previously saved agent
-├── requirements.txt         # Python dependencies
-└── best_agent.npy           # Saved agent weights (generated after training)
+├── DATA/                    # Generated plots and datasets
+│   └── *.png                # Fitness evolution and analysis plots
+├── DOC/                     # Documentation and presentations
+├── IMP/                     # Source code and implementation
+│   ├── main.py              # Entry point — orchestrates training and playback
+│   ├── analyze.py           # Analysis pipeline for operator comparison
+│   ├── genetic_algorithm.py # GA logic: population, fitness, selection, crossover, mutation
+│   ├── neural_network.py    # Feedforward neural network (agent controller)
+│   ├── visualization.py     # Live training display, game sidebar, fitness graphs
+│   ├── test_agent.py        # Utility to test a previously saved agent
+│   └── best_agent.npy       # Saved agent weights (generated after training)
+└── requirements.txt         # Python dependencies
 ```
 
 ---
@@ -88,6 +93,12 @@ pip install -r requirements.txt
 
 ## Usage
 
+**Important:** All code should now be executed from inside the `IMP` folder!
+
+```bash
+cd IMP
+```
+
 ### Train a new agent
 
 ```bash
@@ -105,14 +116,22 @@ COMPARE_MODE = False             # True: runs both methods and plots side-by-sid
 1. Opens a live pygame window showing generation progress, fitness curves, and elapsed time.
 2. Runs the GA for 100 generations.
 3. Displays a final summary screen before playback.
-4. Saves the best agent weights to `best_agent.npy`.
-5. Saves a fitness evolution graph as `fitness_evolution_{method}.png`.
+4. Saves the best agent weights to `best_agent.npy` (inside `IMP`).
+5. Saves a fitness evolution graph as `fitness_evolution_{method}.png` (inside `DATA`).
 6. Plays 5 visual games with the best trained agent.
 
 **Compare mode** (`COMPARE_MODE = True`):
 1. Runs tournament selection followed by rank selection in sequence.
-2. Saves a side-by-side comparison graph as `fitness_evolution_comparison.png`.
+2. Saves a side-by-side comparison graph as `fitness_evolution_comparison.png` (inside `DATA`).
 3. Plays back the best agent from whichever method scored higher.
+
+### Run the Analysis Pipeline
+
+```bash
+python analyze.py
+```
+
+Runs the full experimental suite (mutation rates, crossover variants, and grid search) generating all the analysis plots inside the `DATA` folder.
 
 ### Test a pre-trained agent
 
@@ -140,11 +159,12 @@ Key hyperparameters are defined at the top of `genetic_algorithm.py`:
 
 ## Output Files
 
-| File | Description |
-|---|---|
-| `best_agent.npy` | Saved weights of the best evolved agent |
-| `fitness_evolution_tournament.png` | Fitness graph from tournament selection run |
-| `fitness_evolution_rank.png` | Fitness graph from rank selection run |
-| `fitness_evolution_comparison.png` | Side-by-side graph from compare mode |
+| File | Location | Description |
+|---|---|---|
+| `best_agent.npy` | `IMP/` | Saved weights of the best evolved agent |
+| `fitness_evolution_*.png` | `DATA/` | Fitness graphs from basic runs |
+| `mutation_analysis.png` | `DATA/` | Analysis plot from `analyze.py` phase 1 |
+| `crossover_analysis_*.png` | `DATA/` | Analysis plots from `analyze.py` phase 2 |
+| `best_combination.png` | `DATA/` | Grid search results from `analyze.py` phase 3 |
 
-> These files are excluded from version control via `.gitignore`.
+> Note: The output graphs and generated models are excluded from version control via `.gitignore`.
